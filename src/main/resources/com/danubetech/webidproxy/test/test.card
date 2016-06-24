@@ -1,0 +1,19 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<>
+    <http://purl.org/dc/terms/title> "WebID profile of Donald Duck" ;
+    a <http://xmlns.com/foaf/0.1/PersonalProfileDocument> ;
+    <http://xmlns.com/foaf/0.1/maker> <#me> ;
+    <http://xmlns.com/foaf/0.1/primaryTopic> <#me> .
+
+<#key>
+    a <http://www.w3.org/ns/auth/cert#RSAPublicKey> ;
+    <http://www.w3.org/ns/auth/cert#exponent> "65537"^^<http://www.w3.org/2001/XMLSchema#int> ;
+    <http://www.w3.org/ns/auth/cert#modulus> "97b8734ca04f16beaa3de34feb8cb8689714fe057102539cc1f48bf117cdab5396b3fbfe5bc460061d2cfaea019bf0245f2748d5db3be7cf7a4832714442fdf7eb3e277f0232939e0333a5ec675416ae929d3edf55a39aa0d77227466ca8d31905c88e4e9c4c629e16841389288d75ef7e15c369cba741e2872abf9bf61adeeee281b17c430128a2fe68812330413872877b5754f66e3c67d7f0fe2d9d326bfab7bc27864c2446d45864200590ce3d7595b503bb492517922337bf613cce3ef25fda48e12ea61ba386eb6b294f6b960701402af5b0597456eb5fbabc869c52900764f84c90d3b6e8c277d0ed452f4380dcfb2be2a679ebdb86ba3aa6cf234919"^^<http://www.w3.org/2001/XMLSchema#hexBinary> .
+
+<#me>
+    a <http://xmlns.com/foaf/0.1/Person> ;
+    <http://www.w3.org/ns/auth/cert#key> <#key> ;
+    <http://xmlns.com/foaf/0.1/mbox> <mailto:donald.duck@gmail.com> ;
+    <http://xmlns.com/foaf/0.1/name> "Donald Duck" .
+

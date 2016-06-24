@@ -23,9 +23,11 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.cookie.CookieSpecProvider;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
 import org.apache.http.message.BasicNameValuePair;
@@ -37,10 +39,10 @@ public class WebIDProxyTest {
 	private static final Log log = LogFactory.getLog(WebIDProxyTest.class);
 
 	static String doTest = System.getProperty("webidproxy.test.alluserswillbedeleted");
-	static String pathToSolid = "/opt/solid";
-	static String pathToProxy = "/home/markus/workspace-jolocom/webid-proxy";
-	static String proxyUrl = "http://localhost:8111";
-	static String webIdHost = "mywebid.com:8443";
+	static String pathToSolid = System.getProperty("webidproxy.test.pathToSolid");
+	static String pathToProxy = System.getProperty("webidproxy.test.pathToProxy");
+	static String proxyUrl = System.getProperty("webidproxy.test.proxyUrl");
+	static String webIdHost = System.getProperty("webidproxy.test.webIdHost");
 
 	static HttpClient newHttpClient() throws Exception {
 
@@ -153,27 +155,47 @@ public class WebIDProxyTest {
 		return httpClient;
 	}
 
-	static HttpEntity getCard(HttpClient httpClient, String username) throws Exception {
+	static void getCard(HttpClient httpClient, String username, String card, int expectedStatusCode, String expectedContent) throws Exception {
 
-		String card = "https://" + username + "." + webIdHost + "/profile/card";
-		
+		String cardUrl = "https://" + username + "." + webIdHost + "/profile/" + card;
+
 		String target = proxyUrl;
 		if (! target.endsWith("/")) target += "/";
-		target += "proxy/";
-		target += card;
+		target += "proxy?url=";
+		target += cardUrl;
 
 		HttpGet httpGet = new HttpGet(target);
 		HttpResponse httpResponse = httpClient.execute(httpGet);
 
-		if (httpResponse.getStatusLine().getStatusCode() != 200) throw new Exception("Unexpected response to /proxy: " + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase());
+		if (httpResponse.getStatusLine().getStatusCode() != expectedStatusCode) throw new Exception("Unexpected response to /proxy: " + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase() + " (is not " + expectedStatusCode + ")");
 
-		HttpEntity httpEntity = httpResponse.getEntity();
-		if (! EntityUtils.toString(httpEntity).contains("<" + card + "#>")) throw new Exception("Unexpected card content: " + EntityUtils.toString(httpEntity));
+		if (expectedContent != null) {
 
-		return httpEntity;
+			HttpEntity httpEntity = httpResponse.getEntity();
+			String httpEntityString = EntityUtils.toString(httpEntity);
+			if (! httpEntityString.contains(expectedContent)) throw new Exception("Unexpected card content: " + httpEntityString);
+		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	static void putCard(HttpClient httpClient, String username, String card) throws Exception {
+
+		HttpEntity cardHttpEntity = new InputStreamEntity(WebIDProxyTest.class.getResourceAsStream("test.card"));
+
+		String cardUrl = "https://" + username + "." + webIdHost + "/profile/" + card;
+
+		String target = proxyUrl;
+		if (! target.endsWith("/")) target += "/";
+		target += "proxy?url=";
+		target += cardUrl;
+
+		HttpPut httpPut = new HttpPut(target);
+		httpPut.setEntity(cardHttpEntity);
+		HttpResponse httpResponse = httpClient.execute(httpPut);
+
+		if (httpResponse.getStatusLine().getStatusCode() != 201) throw new Exception("Unexpected response to /proxy: " + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase());
+	}
+
+	public static void run() throws Exception {
 
 		if (doTest == null) {
 
@@ -199,11 +221,41 @@ public class WebIDProxyTest {
 		HttpClient testuser2HttpClient = loginUser("testuser2", "password");
 		log.info("Successfully logged in 'testuser2'");
 
-		HttpEntity testuser1CardHttpEntity = getCard(testuser1HttpClient, "testuser1");
-		log.info("testuser1 card retrieved by testuser1: " + testuser1CardHttpEntity.getContentType());
+		getCard(testuser1HttpClient, "testuser1", "card", 200, "\"Created by solid-server\";");
+		log.info("testuser1 card retrieved by testuser1");
 
-		HttpEntity testuser2CardHttpEntity = getCard(testuser2HttpClient, "testuser2");
-		log.info("testuser2 card retrieved by testuser2: " + testuser2CardHttpEntity.getContentType());
+		getCard(testuser2HttpClient, "testuser2", "card", 200, "\"Created by solid-server\";");
+		log.info("testuser2 card retrieved by testuser2");
+
+		putCard(testuser1HttpClient, "testuser1", "card2");
+		log.info("testuser1 card2 sent by testuser1.");
+
+		putCard(testuser2HttpClient, "testuser2", "card2");
+		log.info("testuser2 card2 sent by testuser2.");
+
+		getCard(testuser1HttpClient, "testuser1", "card2", 200, "\"WebID profile of Donald Duck\"");
+		log.info("testuser1 card2 retrieved by testuser1");
+
+		getCard(testuser2HttpClient, "testuser2", "card2", 200, "\"WebID profile of Donald Duck\"");
+		log.info("testuser2 card2 retrieved by testuser2");
+
+		getCard(testuser2HttpClient, "testuser1", "card2", 403, null);
+		log.info("testuser1 card2 retrieved by testuser2");
+
+		getCard(testuser1HttpClient, "testuser2", "card2", 403, null);
+		log.info("testuser2 card2 retrieved by testuser1");
+	}
+
+	public static void main(String[] args) throws Exception {
+
+		try {
+
+			run();
+		} catch (Exception ex) {
+
+			log.warn(ex.getMessage(), ex);
+			throw ex;
+		}
 	}
 
 	private static HttpRequestInterceptor MYHTTPREQUESTINTERCEPTOR = new HttpRequestInterceptor() {
