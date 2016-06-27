@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.danubetech</groupId>
+	<groupId>com.jolocom</groupId>
 	<artifactId>webid-proxy-test</artifactId>
 	<packaging>jar</packaging>
 	<version>0.1-SNAPSHOT</version>
@@ -31,7 +31,7 @@
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.1.1</version>
 				<configuration>
-					<mainClass>com.danubetech.webidproxy.test.WebIDProxyTest</mainClass>
+					<mainClass>com.jolocom.webidproxy.test.WebIDProxyTest</mainClass>
 				</configuration>
 			</plugin>
 

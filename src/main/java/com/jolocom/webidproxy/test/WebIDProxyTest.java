@@ -1,4 +1,4 @@
-package com.danubetech.webidproxy.test;
+package com.jolocom.webidproxy.test;
 
 import java.io.File;
 import java.io.FileFilter;
