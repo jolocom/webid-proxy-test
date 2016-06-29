@@ -30,6 +30,7 @@ import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -113,6 +114,7 @@ public class WebIDProxyTest {
 
 		HttpClient httpClient = newHttpClient();
 		HttpPost httpPost = new HttpPost(target);
+		httpPost.setHeader(new BasicHeader("Origin", "https://mytestclient.com/"));
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair> ();
 		nameValuePairs.add(new BasicNameValuePair("username", username));
 		nameValuePairs.add(new BasicNameValuePair("password", password));
@@ -120,6 +122,8 @@ public class WebIDProxyTest {
 		HttpResponse httpResponse = httpClient.execute(httpPost);
 
 		if (httpResponse.getStatusLine().getStatusCode() != 200) throw new Exception("Unexpected response to /register: " + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase());
+
+		if (! new BasicHeader("Access-Control-Allow-Origin", "https://mytestclient.com/").toString().equals(httpResponse.getFirstHeader("Access-Control-Allow-Origin").toString())) throw new Exception("Unexpected header: " + httpResponse.getFirstHeader("Access-Control-Allow-Origin"));
 
 		final String webIdHostWithoutPort = webIdHost.substring(0,  webIdHost.indexOf(':')); 
 
@@ -144,6 +148,7 @@ public class WebIDProxyTest {
 
 		HttpClient httpClient = newHttpClient();
 		HttpPost httpPost = new HttpPost(target);
+		httpPost.setHeader(new BasicHeader("Origin", "https://mytestclient.com/"));
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair> ();
 		nameValuePairs.add(new BasicNameValuePair("username", username));
 		nameValuePairs.add(new BasicNameValuePair("password", password));
@@ -151,6 +156,8 @@ public class WebIDProxyTest {
 		HttpResponse httpResponse = httpClient.execute(httpPost);
 
 		if (httpResponse.getStatusLine().getStatusCode() != 200) throw new Exception("Unexpected response to /login: " + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase());
+
+		if (! new BasicHeader("Access-Control-Allow-Origin", "https://mytestclient.com/").toString().equals(httpResponse.getFirstHeader("Access-Control-Allow-Origin").toString())) throw new Exception("Unexpected header: " + httpResponse.getFirstHeader("Access-Control-Allow-Origin"));
 
 		return httpClient;
 	}
