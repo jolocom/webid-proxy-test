@@ -162,6 +162,21 @@ public class WebIDProxyTest {
 		return httpClient;
 	}
 
+	static void logoutUser(HttpClient httpClient) throws Exception {
+
+		String target = proxyUrl;
+		if (! target.endsWith("/")) target += "/";
+		target += "logout";
+
+		HttpPost httpPost = new HttpPost(target);
+		httpPost.setHeader(new BasicHeader("Origin", "https://mytestclient.com/"));
+		HttpResponse httpResponse = httpClient.execute(httpPost);
+
+		if (httpResponse.getStatusLine().getStatusCode() != 200) throw new Exception("Unexpected response to /logout: " + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase());
+
+		if (! new BasicHeader("Access-Control-Allow-Origin", "https://mytestclient.com/").toString().equals(httpResponse.getFirstHeader("Access-Control-Allow-Origin").toString())) throw new Exception("Unexpected header: " + httpResponse.getFirstHeader("Access-Control-Allow-Origin"));
+	}
+
 	static void getCard(HttpClient httpClient, String username, String card, int expectedStatusCode, String expectedContent) throws Exception {
 
 		String cardUrl = "https://" + username + "." + webIdHost + "/profile/" + card;
@@ -247,10 +262,16 @@ public class WebIDProxyTest {
 		log.info("testuser2 card2 retrieved by testuser2");
 
 		getCard(testuser2HttpClient, "testuser1", "card2", 403, null);
-		log.info("testuser1 card2 retrieved by testuser2");
+		log.info("testuser1 card2 not retrievable by testuser2");
 
 		getCard(testuser1HttpClient, "testuser2", "card2", 403, null);
-		log.info("testuser2 card2 retrieved by testuser1");
+		log.info("testuser2 card2 not retrievable by testuser1");
+
+		logoutUser(testuser1HttpClient);
+		log.info("Successfully logged out 'testuser1'");
+
+		logoutUser(testuser2HttpClient);
+		log.info("Successfully logged out 'testuser2'");
 	}
 
 	public static void main(String[] args) throws Exception {
